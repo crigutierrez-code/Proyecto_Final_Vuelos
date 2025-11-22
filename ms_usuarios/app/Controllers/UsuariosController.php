@@ -65,14 +65,14 @@ class UsuariosController
             $user = User::where('token', $token)->first();
 
             if (empty($user)) {
-                throw new Exception("Token inválido", 1);
+                throw new Exception("Token invalido", 1);
             }
 
             $user->token = null;
             $user->save();
 
             $response->getBody()->write(json_encode([
-                'message' => 'Sesión cerrada correctamente'
+                'message' => 'Sesion cerrada correctamente'
             ]));
             return $response->withHeader('Content-Type', 'application/json');
         } catch (Exception $ex) {

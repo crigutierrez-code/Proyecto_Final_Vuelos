@@ -23,16 +23,16 @@ Content-Type: application/json
 
 ### Listar usuarios (requiere token)
 GET http://127.0.0.1:8000/usuarios
-Authorization: Bearer 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af091180
+Authorization: Bearer 4af37e0c06bce30ea94c66b16009412fde34a18b19885a23c259ef38ee21fc97
 
 ### Obtener usuario por ID
 GET http://127.0.0.1:8000/usuarios/1
-Authorization: 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af091180
+Authorization: 4af37e0c06bce30ea94c66b16009412fde34a18b19885a23c259ef38ee21fc97
 
 ### Actualizar usuario
 PUT http://127.0.0.1:8000/usuarios/1
 Content-Type: application/json
-Authorization: Bearer 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af091180
+Authorization: Bearer 4af37e0c06bce30ea94c66b16009412fde34a18b19885a23c259ef38ee21fc97
 
 {
     "name": "Admin Actualizado",
@@ -41,8 +41,8 @@ Authorization: Bearer 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af
 
 ### Eliminar usuario
 DELETE http://127.0.0.1:8000/usuarios/3
-Authorization: Bearer 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af091180
+Authorization: Bearer 4af37e0c06bce30ea94c66b16009412fde34a18b19885a23c259ef38ee21fc97
 
 ### Cerrar sesión
 POST http://127.0.0.1:8000/logout
-Authorization: Bearer 45aa7c181add97f8f13c967a156e8343c96b776018210fd980c555b5af091180
+Authorization: Bearer 4af37e0c06bce30ea94c66b16009412fde34a18b19885a23c259ef38ee21fc97
