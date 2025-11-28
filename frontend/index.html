@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Vuelos</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Sistema de Vuelos</div>
+        <div class="nav-user">
+            <span id="userName"></span>
+            <button onclick="logoutUser()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Bienvenido al Sistema de Gestión de Vuelos</h1>
+        
+        <div class="dashboard-grid">
+            <div class="card" id="adminCard" style="display: none;">
+                <h2>Panel de Administrador</h2>
+                <p>Gestiona usuarios, vuelos y naves</p>
+                <a href="/pages/admin/usuarios.html" class="btn-primary">Gestionar Usuarios</a>
+                <a href="/pages/admin/vuelos.html" class="btn-primary">Gestionar Vuelos</a>
+                <a href="/pages/admin/naves.html" class="btn-primary">Gestionar Naves</a>
+            </div>
+
+            <div class="card" id="gestorCard" style="display: none;">
+                <h2>Panel de Gestor</h2>
+                <p>Gestiona reservas de vuelos</p>
+                <a href="/pages/gestor/reservas.html" class="btn-primary">Gestionar Reservas</a>
+            </div>
+
+            <div class="card">
+                <h2>Búsqueda de Vuelos</h2>
+                <p>Busca vuelos disponibles</p>
+                <form id="searchForm">
+                    <input type="text" id="origin" placeholder="Origen" class="form-control">
+                    <input type="text" id="destination" placeholder="Destino" class="form-control">
+                    <input type="date" id="date" class="form-control">
+                    <button type="submit" class="btn-primary">Buscar</button>
+                </form>
+                <div id="flightResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Verificar autenticación
+        requireAuth();
+
+        // Mostrar información del usuario
+        const user = getUser();
+        document.getElementById('userName').textContent = user.name;
+
+        // Mostrar paneles según rol
+        if (isAdmin()) {
+            document.getElementById('adminCard').style.display = 'block';
+        }
+        if (isGestor()) {
+            document.getElementById('gestorCard').style.display = 'block';
+        }
+
+        // Búsqueda de vuelos
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const date = document.getElementById('date').value;
+
+            let url = `${API_CONFIG.VUELOS}/vuelos/search?`;
+            if (origin) url += `origin=${origin}&`;
+            if (destination) url += `destination=${destination}&`;
+            if (date) url += `date=${date}`;
+
+            try {
+                const response = await fetch(url);
+                const flights = await response.json();
+                
+                const resultsDiv = document.getElementById('flightResults');
+                if (flights.length === 0) {
+                    resultsDiv.innerHTML = '<p>No se encontraron vuelos</p>';
+                } else {
+                    resultsDiv.innerHTML = flights.map(f => `
+                        <div class="flight-item">
+                            <strong>${f.origin} → ${f.destination}</strong><br>
+                            Salida: ${f.departure}<br>
+                            Precio: $${f.price}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+#---------------------------- USUARIOS (8000) ----------------------------
+
+###Prueba del microservicio usuarios
+GET http://127.0.0.1:8000
+
+###Registrar usuario
+POST http://127.0.0.1:8000/usuarios/register
+Content-Type: application/json
+{
+"name": "Nuevo Usuario",
+"email": "nuevo@test.com",
+"password": "12345",
+"role": "gestor"
+}
+
+###Login
+POST http://127.0.0.1:8000/usuarios/login
+Content-Type: application/json
+{
+"email": "admin@system.com",
+"password": "admin123"
+}
+
+###Listar todos los usuarios (solo admin)
+GET http://127.0.0.1:8000/usuarios/all
+Authorization: Bearer TU_TOKEN_ADMIN
+
+###Obtener usuario por ID (admin)
+GET http://127.0.0.1:8000/usuarios/1
+Authorization: Bearer TU_TOKEN_ADMIN
+
+###Obtener mi perfil
+GET http://127.0.0.1:8000/usuarios/profile
+Authorization: Bearer TU_TOKEN
+
+###Actualizar usuario por ID (admin)
+PUT http://127.0.0.1:8000/usuarios/1
+Content-Type: application/json
+Authorization: Bearer TU_TOKEN_ADMIN
+{
+"name": "Admin Actualizado",
+"role": "administrador"
+}
+
+###Actualizar mi propio perfil (gestor o admin)
+PUT http://127.0.0.1:8000/usuarios/me
+Content-Type: application/json
+Authorization: Bearer TU_TOKEN
+{
+"name": "Nuevo Nombre"
+}
+
+###Eliminar usuario
+DELETE http://127.0.0.1:8000/usuarios/3
+Authorization: Bearer TU_TOKEN_ADMIN
+
+###Logout
+POST http://127.0.0.1:8000/usuarios/logout
+Authorization: Bearer TU_TOKEN
+
+#---------------------------- VUELOS / NAVES (8001) ----------------------------
+###Test microservicio vuelos
+GET http://127.0.0.1:8001
+
+#============ VUELOS (Público) ============
+###Ver todos los vuelos
+GET http://127.0.0.1:8001/vuelos
+
+###Ver vuelo por ID
+GET http://127.0.0.1:8001/vuelos/1
+
+###Buscar vuelos por origen
+GET http://127.0.0.1:8001/vuelos/search?origin=Bogotá
+
+###Buscar vuelos por destino
+GET http://127.0.0.1:8001/vuelos/search?destination=Medellín
+
+###Buscar vuelos por fecha
+GET http://127.0.0.1:8001/vuelos/search?date=2025-12-01
+
+#============ ADMIN – VUELOS ============
+###Crear vuelo
+POST http://127.0.0.1:8001/admin/vuelos
+Content-Type: application/json
+Authorization: Bearer TOKEN_ADMIN
+{
+"nave_id": 1,
+"origin": "Bogotá",
+"destination": "Cartagena",
+"departure": "2025-12-15 09:00:00",
+"arrival": "2025-12-15 10:30:00",
+"price": 300000
+}
+
+###Actualizar vuelo
+PUT http://127.0.0.1:8001/admin/vuelos/1
+Content-Type: application/json
+Authorization: Bearer TOKEN_ADMIN
+{
+"price": 220000
+}
+
+###Eliminar vuelo
+DELETE http://127.0.0.1:8001/admin/vuelos/4
+Authorization: Bearer TOKEN_ADMIN
+
+#============ ADMIN – NAVES ============
+###Ver todas las naves
+GET http://127.0.0.1:8001/admin/naves
+Authorization: Bearer TOKEN_ADMIN
+
+###Ver nave por ID
+GET http://127.0.0.1:8001/admin/naves/1
+Authorization: Bearer TOKEN_ADMIN
+
+###Crear nave
+POST http://127.0.0.1:8001/admin/naves
+Content-Type: application/json
+Authorization: Bearer TOKEN_ADMIN
+{
+"name": "Aeronave D4",
+"capacity": 200,
+"model": "Boeing 747"
+}
+
+###Actualizar nave
+PUT http://127.0.0.1:8001/admin/naves/1
+Content-Type: application/json
+Authorization: Bearer TOKEN_ADMIN
+{
+"capacity": 190
+}
+
+###Eliminar nave
+DELETE http://127.0.0.1:8001/admin/naves/4
+Authorization: Bearer TOKEN_ADMIN
+
+#============ GESTOR – RESERVAS ============
+###Ver todas las reservas
+GET http://127.0.0.1:8001/gestor/reservas
+Authorization: Bearer TOKEN_GESTOR
+
+###Ver reserva por ID
+GET http://127.0.0.1:8001/gestor/reservas/1
+Authorization: Bearer TOKEN_GESTOR
+
+###Ver reservas por usuario
+GET http://127.0.0.1:8001/gestor/reservas/usuario/2
+Authorization: Bearer TOKEN_GESTOR
+
+###Crear reserva
+POST http://127.0.0.1:8001/gestor/reservas
+Content-Type: application/json
+Authorization: Bearer TOKEN_GESTOR
+{
+"user_id": 2,
+"flight_id": 1
+}
+
+###Cancelar reserva
+PUT http://127.0.0.1:8001/gestor/reservas/1/cancelar
+Authorization: Bearer TOKEN_GESTOR

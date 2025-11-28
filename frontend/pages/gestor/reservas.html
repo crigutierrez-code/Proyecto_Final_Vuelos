@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Reservas - Gestor</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Sistema de Vuelos - Gestor</div>
+        <div class="nav-user">
+            <a href="../../index.html">Inicio</a> | 
+            <a href="reservas.html">Reservas</a> | 
+            <button onclick="logoutUser()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>Gestión de Reservas</h1>
+            
+            <button onclick="mostrarFormularioCrear()" class="btn-primary">Crear Nueva Reserva</button>
+
+            <!-- Formulario Crear Reserva -->
+            <div id="formContainer" style="display: none; margin-top: 2rem;">
+                <h3>Crear Reserva</h3>
+                <form id="reservaForm">
+                    <div class="form-group">
+                        <label>ID del Usuario:</label>
+                        <input type="number" id="user_id" class="form-control" required 
+                               placeholder="Ingrese el ID del usuario" min="1">
+                        <small>Puede consultar el ID en la sección de usuarios</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Seleccionar Vuelo:</label>
+                        <select id="flight_id" class="form-control" required>
+                            <option value="">Seleccione un vuelo...</option>
+                        </select>
+                    </div>
+
+                    <div id="flightDetails" style="display: none; background: #f8f9fa; padding: 1rem; border-radius: 5px; margin-top: 1rem;">
+                        <h4>Detalles del Vuelo Seleccionado:</h4>
+                        <p id="flightInfo"></p>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Crear Reserva</button>
+                    <button type="button" onclick="cancelarFormulario()" class="btn-secondary">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- Filtros -->
+            <div style="margin-top: 2rem; background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                <h3>Filtrar Reservas</h3>
+                <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Por Usuario (ID):</label>
+                        <input type="number" id="filterUserId" class="form-control" placeholder="ID del usuario">
+                    </div>
+                    <button onclick="filtrarPorUsuario()" class="btn-primary">Filtrar</button>
+                    <button onclick="cargarReservas()" class="btn-secondary">Ver Todas</button>
+                </div>
+            </div>
+
+            <!-- Tabla de Reservas -->
+            <div id="reservasContainer" style="margin-top: 2rem;">
+                <h3>Reservas Registradas</h3>
+                <table id="reservasTable">
+                    <thead>
+                        <tr>
+                            <th>ID Reserva</th>
+                            <th>ID Usuario</th>
+                            <th>Vuelo</th>
+                            <th>Origen → Destino</th>
+                            <th>Fecha Vuelo</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th>Fecha Reserva</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservasTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/vuelos.js"></script>
+    <script src="../../js/reservas.js"></script>
+    <script>
+        // Verificar que sea gestor
+        requireGestor();
+
+        // Cargar vuelos disponibles
+        async function cargarVuelos() {
+            try {
+                const vuelos = await getAllFlights();
+                
+                const select = document.getElementById('flight_id');
+                vuelos.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.id;
+                    option.textContent = `${v.origin} → ${v.destination} | ${v.departure} | $${v.price}`;
+                    option.dataset.flight = JSON.stringify(v);
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar vuelos:', error);
+            }
+        }
+
+        // Mostrar detalles del vuelo seleccionado
+        document.getElementById('flight_id').addEventListener('change', (e) => {
+            const option = e.target.selectedOptions[0];
+            if (option.dataset.flight) {
+                const flight = JSON.parse(option.dataset.flight);
+                document.getElementById('flightInfo').innerHTML = `
+                    <strong>Origen:</strong> ${flight.origin}<br>
+                    <strong>Destino:</strong> ${flight.destination}<br>
+                    <strong>Salida:</strong> ${flight.departure}<br>
+                    <strong>Llegada:</strong> ${flight.arrival}<br>
+                    <strong>Precio:</strong> $${flight.price}<br>
+                    <strong>Nave:</strong> ${flight.nave ? flight.nave.name + ' (' + flight.nave.model + ')' : 'N/A'}
+                `;
+                document.getElementById('flightDetails').style.display = 'block';
+            } else {
+                document.getElementById('flightDetails').style.display = 'none';
+            }
+        });
+
+        // Cargar reservas
+        async function cargarReservas() {
+            try {
+                const reservas = await getAllReservations();
+                mostrarReservas(reservas);
+            } catch (error) {
+                console.error('Error al cargar reservas:', error);
+                alert('Error al cargar reservas');
+            }
+        }
+
+        // Mostrar reservas en la tabla
+        function mostrarReservas(reservas) {
+            const tbody = document.getElementById('reservasTableBody');
+            
+            if (reservas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No hay reservas registradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reservas.map(r => {
+                const estadoClass = r.status === 'activa' ? 'badge-success' : 'badge-danger';
+                return `
+                    <tr>
+                        <td>${r.id}</td>
+                        <td>${r.user_id}</td>
+                        <td>#${r.flight_id}</td>
+                        <td>${r.flight ? r.flight.origin + ' → ' + r.flight.destination : 'N/A'}</td>
+                        <td>${r.flight ? r.flight.departure : 'N/A'}</td>
+                        <td>${r.flight ? '$' + r.flight.price : 'N/A'}</td>
+                        <td><span class="badge ${estadoClass}">${r.status}</span></td>
+                        <td>${r.reserved_at ? new Date(r.reserved_at).toLocaleString() : 'N/A'}</td>
+                        <td>
+                            ${r.status === 'activa' ? 
+                                `<button onclick="cancelarReserva(${r.id})" class="btn-danger">Cancelar</button>` :
+                                '<span style="color: #999;">Cancelada</span>'
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Filtrar por usuario
+        async function filtrarPorUsuario() {
+            const userId = document.getElementById('filterUserId').value;
+            if (!userId) {
+                alert('Ingrese un ID de usuario');
+                return;
+            }
+
+            try {
+                const reservas = await getReservationsByUser(userId);
+                mostrarReservas(reservas);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al filtrar reservas');
+            }
+        }
+
+        // Mostrar formulario crear
+        function mostrarFormularioCrear() {
+            document.getElementById('reservaForm').reset();
+            document.getElementById('flightDetails').style.display = 'none';
+            document.getElementById('formContainer').style.display = 'block';
+        }
+
+        // Cancelar formulario
+        function cancelarFormulario() {
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('reservaForm').reset();
+        }
+
+        // Crear reserva
+        document.getElementById('reservaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                user_id: parseInt(document.getElementById('user_id').value),
+                flight_id: parseInt(document.getElementById('flight_id').value)
+            };
+
+            try {
+                await createReservation(data);
+                alert('Reserva creada exitosamente');
+                cancelarFormulario();
+                cargarReservas();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al crear reserva: ' + error.message);
+            }
+        });
+
+        // Cancelar reserva
+        async function cancelarReserva(id) {
+            if (!confirm('¿Está seguro de cancelar esta reserva?')) return;
+            
+            try {
+                await cancelReservation(id);
+                alert('Reserva cancelada exitosamente');
+                cargarReservas();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cancelar reserva: ' + error.message);
+            }
+        }
+
+        // Inicializar
+        cargarVuelos();
+        cargarReservas();
+    </script>
+
+    <style>
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-admin {
+            background-color: #667eea;
+            color: white;
+        }
+        .badge-gestor {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Naves - Admin</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Sistema de Vuelos - Admin</div>
+        <div class="nav-user">
+            <a href="../../index.html">Inicio</a> | 
+            <a href="usuarios.html">Usuarios</a> | 
+            <a href="vuelos.html">Vuelos</a> | 
+            <a href="naves.html">Naves</a> | 
+            <button onclick="logoutUser()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>Gestión de Naves (Aeronaves)</h1>
+            
+            <button onclick="mostrarFormularioCrear()" class="btn-primary">Registrar Nueva Nave</button>
+
+            <!-- Formulario Crear/Editar -->
+            <div id="formContainer" style="display: none; margin-top: 2rem;">
+                <h3 id="formTitle">Registrar Nave</h3>
+                <form id="naveForm">
+                    <div class="form-group">
+                        <label>Nombre de la Nave:</label>
+                        <input type="text" id="name" class="form-control" required 
+                               placeholder="Ej: Aeronave A1">
+                    </div>
+                    <div class="form-group">
+                        <label>Capacidad (Pasajeros):</label>
+                        <input type="number" id="capacity" class="form-control" required 
+                               placeholder="Ej: 180" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo:</label>
+                        <input type="text" id="model" class="form-control" required 
+                               placeholder="Ej: Airbus A320">
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" onclick="cancelarFormulario()" class="btn-secondary">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- Tabla de Naves -->
+            <div id="navesContainer" style="margin-top: 2rem;">
+                <h3>Naves Registradas</h3>
+                <table id="navesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Modelo</th>
+                            <th>Capacidad</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="navesTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/naves.js"></script>
+    <script>
+        // Verificar que sea administrador
+        requireAdmin();
+
+        let editandoId = null;
+
+        // Cargar naves
+        async function cargarNaves() {
+            try {
+                const naves = await getAllNaves();
+                
+                const tbody = document.getElementById('navesTableBody');
+                tbody.innerHTML = naves.map(n => `
+                    <tr>
+                        <td>${n.id}</td>
+                        <td>${n.name}</td>
+                        <td>${n.model}</td>
+                        <td>${n.capacity} pasajeros</td>
+                        <td>${n.created_at ? new Date(n.created_at).toLocaleDateString() : 'N/A'}</td>
+                        <td>
+                            <button onclick="editarNave(${n.id})" class="btn-secondary">Editar</button>
+                            <button onclick="eliminarNave(${n.id})" class="btn-danger">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error al cargar naves:', error);
+                alert('Error al cargar naves');
+            }
+        }
+
+        // Mostrar formulario crear
+        function mostrarFormularioCrear() {
+            editandoId = null;
+            document.getElementById('formTitle').textContent = 'Registrar Nave';
+            document.getElementById('naveForm').reset();
+            document.getElementById('formContainer').style.display = 'block';
+        }
+
+        // Cancelar formulario
+        function cancelarFormulario() {
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('naveForm').reset();
+            editandoId = null;
+        }
+
+        // Crear/Actualizar nave
+        document.getElementById('naveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('name').value,
+                capacity: parseInt(document.getElementById('capacity').value),
+                model: document.getElementById('model').value
+            };
+
+            try {
+                if (editandoId) {
+                    await updateNave(editandoId, data);
+                    alert('Nave actualizada exitosamente');
+                } else {
+                    await createNave(data);
+                    alert('Nave registrada exitosamente');
+                }
+                
+                cancelarFormulario();
+                cargarNaves();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar nave: ' + error.message);
+            }
+        });
+
+        // Editar nave
+        async function editarNave(id) {
+            try {
+                const nave = await getNaveById(id);
+                
+                editandoId = id;
+                document.getElementById('formTitle').textContent = 'Editar Nave';
+                document.getElementById('name').value = nave.name;
+                document.getElementById('capacity').value = nave.capacity;
+                document.getElementById('model').value = nave.model;
+                
+                document.getElementById('formContainer').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar nave');
+            }
+        }
+
+        // Eliminar nave
+        async function eliminarNave(id) {
+            if (!confirm('¿Está seguro de eliminar esta nave? Esto puede afectar los vuelos asociados.')) return;
+            
+            try {
+                await deleteNave(id);
+                alert('Nave eliminada exitosamente');
+                cargarNaves();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar nave: ' + error.message);
+            }
+        }
+
+        // Inicializar
+        cargarNaves();
+    </script>
+</body>
+</html>

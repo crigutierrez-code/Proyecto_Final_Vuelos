@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Vuelos - Admin</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Sistema de Vuelos - Admin</div>
+        <div class="nav-user">
+            <a href="../../index.html">Inicio</a> | 
+            <a href="usuarios.html">Usuarios</a> | 
+            <a href="vuelos.html">Vuelos</a> | 
+            <a href="naves.html">Naves</a> | 
+            <button onclick="logoutUser()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>Gestión de Vuelos</h1>
+            
+            <button onclick="mostrarFormularioCrear()" class="btn-primary">Crear Nuevo Vuelo</button>
+
+            <!-- Formulario Crear/Editar -->
+            <div id="formContainer" style="display: none; margin-top: 2rem;">
+                <h3 id="formTitle">Crear Vuelo</h3>
+                <form id="vueloForm">
+                    <div class="form-group">
+                        <label>Nave:</label>
+                        <select id="nave_id" class="form-control" required>
+                            <option value="">Seleccione una nave...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Origen:</label>
+                        <input type="text" id="origin" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Destino:</label>
+                        <input type="text" id="destination" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Salida:</label>
+                        <input type="datetime-local" id="departure" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora de Llegada:</label>
+                        <input type="datetime-local" id="arrival" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio:</label>
+                        <input type="number" id="price" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" onclick="cancelarFormulario()" class="btn-secondary">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- Tabla de Vuelos -->
+            <div id="vuelosContainer" style="margin-top: 2rem;">
+                <h3>Vuelos Registrados</h3>
+                <table id="vuelosTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>Salida</th>
+                            <th>Llegada</th>
+                            <th>Precio</th>
+                            <th>Nave</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vuelosTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        // Verificar que sea administrador
+        requireAdmin();
+
+        let editandoId = null;
+
+        // Cargar naves para el select
+        async function cargarNaves() {
+            try {
+                const response = await fetch(`${API_CONFIG.VUELOS}/admin/naves`, {
+                    headers: getAuthHeaders()
+                });
+                const naves = await response.json();
+                
+                const select = document.getElementById('nave_id');
+                naves.forEach(nave => {
+                    const option = document.createElement('option');
+                    option.value = nave.id;
+                    option.textContent = `${nave.name} - ${nave.model}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar naves:', error);
+            }
+        }
+
+        // Cargar vuelos
+        async function cargarVuelos() {
+            try {
+                const response = await fetch(`${API_CONFIG.VUELOS}/vuelos`);
+                const vuelos = await response.json();
+                
+                const tbody = document.getElementById('vuelosTableBody');
+                tbody.innerHTML = vuelos.map(v => `
+                    <tr>
+                        <td>${v.id}</td>
+                        <td>${v.origin}</td>
+                        <td>${v.destination}</td>
+                        <td>${v.departure}</td>
+                        <td>${v.arrival}</td>
+                        <td>$${v.price}</td>
+                        <td>${v.nave ? v.nave.name : 'N/A'}</td>
+                        <td>
+                            <button onclick="editarVuelo(${v.id})" class="btn-secondary">Editar</button>
+                            <button onclick="eliminarVuelo(${v.id})" class="btn-danger">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error al cargar vuelos:', error);
+            }
+        }
+
+        // Mostrar formulario crear
+        function mostrarFormularioCrear() {
+            editandoId = null;
+            document.getElementById('formTitle').textContent = 'Crear Vuelo';
+            document.getElementById('vueloForm').reset();
+            document.getElementById('formContainer').style.display = 'block';
+        }
+
+        // Cancelar formulario
+        function cancelarFormulario() {
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('vueloForm').reset();
+            editandoId = null;
+        }
+
+        // Crear/Actualizar vuelo
+        document.getElementById('vueloForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                nave_id: document.getElementById('nave_id').value,
+                origin: document.getElementById('origin').value,
+                destination: document.getElementById('destination').value,
+                departure: document.getElementById('departure').value,
+                arrival: document.getElementById('arrival').value,
+                price: document.getElementById('price').value
+            };
+
+            try {
+                const url = editandoId 
+                    ? `${API_CONFIG.VUELOS}/admin/vuelos/${editandoId}`
+                    : `${API_CONFIG.VUELOS}/admin/vuelos`;
+                
+                const method = editandoId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Vuelo guardado exitosamente');
+                    cancelarFormulario();
+                    cargarVuelos();
+                } else {
+                    alert('Error al guardar vuelo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar vuelo');
+            }
+        });
+
+        // Editar vuelo
+        async function editarVuelo(id) {
+            try {
+                const response = await fetch(`${API_CONFIG.VUELOS}/vuelos/${id}`);
+                const vuelo = await response.json();
+                
+                editandoId = id;
+                document.getElementById('formTitle').textContent = 'Editar Vuelo';
+                document.getElementById('nave_id').value = vuelo.nave_id;
+                document.getElementById('origin').value = vuelo.origin;
+                document.getElementById('destination').value = vuelo.destination;
+                document.getElementById('departure').value = vuelo.departure.replace(' ', 'T');
+                document.getElementById('arrival').value = vuelo.arrival.replace(' ', 'T');
+                document.getElementById('price').value = vuelo.price;
+                
+                document.getElementById('formContainer').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Eliminar vuelo
+        async function eliminarVuelo(id) {
+            if (!confirm('¿Está seguro de eliminar este vuelo?')) return;
+            
+            try {
+                const response = await fetch(`${API_CONFIG.VUELOS}/admin/vuelos/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    alert('Vuelo eliminado exitosamente');
+                    cargarVuelos();
+                } else {
+                    alert('Error al eliminar vuelo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar vuelo');
+            }
+        }
+
+        // Inicializar
+        cargarNaves();
+        cargarVuelos();
+    </script>
+</body>
+</html>

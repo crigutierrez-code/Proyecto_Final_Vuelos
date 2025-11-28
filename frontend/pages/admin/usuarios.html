@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - Admin</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Sistema de Vuelos - Admin</div>
+        <div class="nav-user">
+            <a href="../../index.html">Inicio</a> | 
+            <a href="usuarios.html">Usuarios</a> | 
+            <a href="vuelos.html">Vuelos</a> | 
+            <a href="naves.html">Naves</a> | 
+            <button onclick="logoutUser()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>Gestión de Usuarios</h1>
+            
+            <button onclick="mostrarFormularioCrear()" class="btn-primary">Crear Nuevo Usuario</button>
+
+            <!-- Formulario Crear/Editar -->
+            <div id="formContainer" style="display: none; margin-top: 2rem;">
+                <h3 id="formTitle">Crear Usuario</h3>
+                <form id="usuarioForm">
+                    <div class="form-group">
+                        <label>Nombre:</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Rol:</label>
+                        <select id="role" class="form-control" required>
+                            <option value="gestor">Gestor</option>
+                            <option value="administrador">Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" onclick="cancelarFormulario()" class="btn-secondary">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- Tabla de Usuarios -->
+            <div id="usuariosContainer" style="margin-top: 2rem;">
+                <h3>Usuarios Registrados</h3>
+                <table id="usuariosTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuariosTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/usuarios.js"></script>
+    <script>
+        // Verificar que sea administrador
+        requireAdmin();
+
+        let editandoId = null;
+
+        // Cargar usuarios
+        async function cargarUsuarios() {
+            try {
+                const usuarios = await getAllUsers();
+                
+                const tbody = document.getElementById('usuariosTableBody');
+                tbody.innerHTML = usuarios.map(u => `
+                    <tr>
+                        <td>${u.id}</td>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td><span class="badge ${u.role === 'administrador' ? 'badge-admin' : 'badge-gestor'}">${u.role}</span></td>
+                        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
+                        <td>
+                            <button onclick="editarUsuario(${u.id})" class="btn-secondary">Editar</button>
+                            <button onclick="eliminarUsuario(${u.id})" class="btn-danger">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error al cargar usuarios:', error);
+                alert('Error al cargar usuarios');
+            }
+        }
+
+        // Mostrar formulario crear
+        function mostrarFormularioCrear() {
+            editandoId = null;
+            document.getElementById('formTitle').textContent = 'Crear Usuario';
+            document.getElementById('usuarioForm').reset();
+            document.getElementById('password').required = true;
+            document.getElementById('formContainer').style.display = 'block';
+        }
+
+        // Cancelar formulario
+        function cancelarFormulario() {
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('usuarioForm').reset();
+            editandoId = null;
+        }
+
+        // Crear/Actualizar usuario
+        document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                role: document.getElementById('role').value
+            };
+
+            const password = document.getElementById('password').value;
+            if (password) {
+                data.password = password;
+            }
+
+            try {
+                if (editandoId) {
+                    await updateUser(editandoId, data);
+                    alert('Usuario actualizado exitosamente');
+                } else {
+                    await createUser(data);
+                    alert('Usuario creado exitosamente');
+                }
+                
+                cancelarFormulario();
+                cargarUsuarios();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar usuario: ' + error.message);
+            }
+        });
+
+        // Editar usuario
+        async function editarUsuario(id) {
+            try {
+                const usuario = await getUserById(id);
+                
+                editandoId = id;
+                document.getElementById('formTitle').textContent = 'Editar Usuario';
+                document.getElementById('name').value = usuario.name;
+                document.getElementById('email').value = usuario.email;
+                document.getElementById('role').value = usuario.role;
+                document.getElementById('password').value = '';
+                document.getElementById('password').required = false;
+                
+                document.getElementById('formContainer').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar usuario');
+            }
+        }
+
+        // Eliminar usuario
+        async function eliminarUsuario(id) {
+            if (!confirm('¿Está seguro de eliminar este usuario?')) return;
+            
+            try {
+                await deleteUser(id);
+                alert('Usuario eliminado exitosamente');
+                cargarUsuarios();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+
+        // Inicializar
+        cargarUsuarios();
+    </script>
+</body>
+</html>
