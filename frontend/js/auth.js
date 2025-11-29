@@ -10,17 +10,17 @@ async function login(email, password) {
             },
             body: JSON.stringify({ email, password })
         });
-
+        
         if (!response.ok) {
             throw new Error('Credenciales incorrectas');
         }
-
+        
         const user = await response.json();
         
         // Guardar token y usuario en localStorage
         localStorage.setItem('token', user.token);
         localStorage.setItem('user', JSON.stringify(user));
-
+        
         return user;
     } catch (error) {
         console.error('Error en login:', error);
@@ -40,11 +40,11 @@ async function register(name, email, password, role = 'gestor') {
             },
             body: JSON.stringify({ name, email, password, role })
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al registrar usuario');
         }
-
+        
         const user = await response.json();
         return user;
     } catch (error) {

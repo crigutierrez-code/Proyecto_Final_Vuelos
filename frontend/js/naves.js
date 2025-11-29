@@ -10,11 +10,11 @@ async function getAllNaves() {
         const response = await fetch(`${API_CONFIG.VUELOS}/admin/naves`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al obtener naves');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -30,11 +30,11 @@ async function getNaveById(id) {
         const response = await fetch(`${API_CONFIG.VUELOS}/admin/naves/${id}`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Nave no encontrada');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -52,11 +52,11 @@ async function createNave(naveData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(naveData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al crear nave');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -74,11 +74,11 @@ async function updateNave(id, naveData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(naveData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al actualizar nave');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -95,11 +95,11 @@ async function deleteNave(id) {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al eliminar nave');
         }
-
+        
         return true;
     } catch (error) {
         console.error('Error:', error);

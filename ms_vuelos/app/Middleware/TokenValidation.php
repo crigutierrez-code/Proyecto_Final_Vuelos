@@ -1,7 +1,7 @@
 <?php
+use App\Models\User;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Psr7\Response;
-use Illuminate\Database\Capsule\Manager as DB;
 
 return function (Request $request, $handler) {
     // Obtener el token del header Authorization
@@ -14,7 +14,7 @@ return function (Request $request, $handler) {
     }
 
     // Validar que el token existe en la base de datos
-    $user = DB::table('users')->where('token', $token)->first();
+    $user = User::where('token', $token)->first();
 
     if (!$user) {
         $response = new Response();

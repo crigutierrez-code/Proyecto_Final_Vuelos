@@ -10,11 +10,11 @@ async function getAllReservations() {
         const response = await fetch(`${API_CONFIG.VUELOS}/gestor/reservas`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al obtener reservas');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -30,11 +30,11 @@ async function getReservationById(id) {
         const response = await fetch(`${API_CONFIG.VUELOS}/gestor/reservas/${id}`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Reserva no encontrada');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -50,11 +50,11 @@ async function getReservationsByUser(userId) {
         const response = await fetch(`${API_CONFIG.VUELOS}/gestor/reservas/usuario/${userId}`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al obtener reservas del usuario');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -72,11 +72,11 @@ async function createReservation(reservationData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(reservationData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al crear reserva');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -93,11 +93,11 @@ async function cancelReservation(id) {
             method: 'PUT',
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al cancelar reserva');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);

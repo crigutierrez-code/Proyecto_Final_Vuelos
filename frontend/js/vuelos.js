@@ -8,11 +8,11 @@
 async function getAllFlights() {
     try {
         const response = await fetch(`${API_CONFIG.VUELOS}/vuelos`);
-
+        
         if (!response.ok) {
             throw new Error('Error al obtener vuelos');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -26,11 +26,11 @@ async function getAllFlights() {
 async function getFlightById(id) {
     try {
         const response = await fetch(`${API_CONFIG.VUELOS}/vuelos/${id}`);
-
+        
         if (!response.ok) {
             throw new Error('Vuelo no encontrado');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -48,13 +48,13 @@ async function searchFlights(params) {
         if (params.origin) url += `origin=${params.origin}&`;
         if (params.destination) url += `destination=${params.destination}&`;
         if (params.date) url += `date=${params.date}`;
-
+        
         const response = await fetch(url);
-
+        
         if (!response.ok) {
             throw new Error('Error en la búsqueda');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -72,11 +72,11 @@ async function createFlight(flightData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(flightData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al crear vuelo');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -94,11 +94,11 @@ async function updateFlight(id, flightData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(flightData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al actualizar vuelo');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -115,11 +115,11 @@ async function deleteFlight(id) {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al eliminar vuelo');
         }
-
+        
         return true;
     } catch (error) {
         console.error('Error:', error);

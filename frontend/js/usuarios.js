@@ -1,16 +1,20 @@
-// Funciones para gestión de usuarios
+/**
+ * Funciones para gestión de usuarios
+ */
 
-// Obtener todos los usuarios
+/**
+ * Obtener todos los usuarios
+ */
 async function getAllUsers() {
     try {
         const response = await fetch(`${API_CONFIG.USUARIOS}/usuarios/all`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al obtener usuarios');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -18,17 +22,19 @@ async function getAllUsers() {
     }
 }
 
-// Obtener usuario por ID
+/**
+ * Obtener usuario por ID
+ */
 async function getUserById(id) {
     try {
         const response = await fetch(`${API_CONFIG.USUARIOS}/usuarios/${id}`, {
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Usuario no encontrado');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -36,7 +42,9 @@ async function getUserById(id) {
     }
 }
 
-// Crear usuario
+/**
+ * Crear usuario
+ */
 async function createUser(userData) {
     try {
         const response = await fetch(`${API_CONFIG.USUARIOS}/usuarios/register`, {
@@ -46,11 +54,11 @@ async function createUser(userData) {
             },
             body: JSON.stringify(userData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al crear usuario');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -58,7 +66,9 @@ async function createUser(userData) {
     }
 }
 
-// Actualizar usuario
+/**
+ * Actualizar usuario
+ */
 async function updateUser(id, userData) {
     try {
         const response = await fetch(`${API_CONFIG.USUARIOS}/usuarios/${id}`, {
@@ -66,11 +76,11 @@ async function updateUser(id, userData) {
             headers: getAuthHeaders(),
             body: JSON.stringify(userData)
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al actualizar usuario');
         }
-
+        
         return await response.json();
     } catch (error) {
         console.error('Error:', error);
@@ -78,18 +88,20 @@ async function updateUser(id, userData) {
     }
 }
 
-// Eliminar usuario
+/**
+ * Eliminar usuario
+ */
 async function deleteUser(id) {
     try {
         const response = await fetch(`${API_CONFIG.USUARIOS}/usuarios/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
-
+        
         if (!response.ok) {
             throw new Error('Error al eliminar usuario');
         }
-
+        
         return true;
     } catch (error) {
         console.error('Error:', error);
